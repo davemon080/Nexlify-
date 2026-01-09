@@ -1,16 +1,27 @@
 
-// Import required for Gemini API interactions
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize the Google GenAI SDK with the API key from environment variables.
-// The apiKey is provided via a named parameter as required.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safe check for process.env to prevent blank page crashes in browser-only environments
+const getApiKey = () => {
+  try {
+    return (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : null;
+  } catch {
+    return null;
+  }
+};
+
+const API_KEY = getApiKey();
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 /**
  * Generates an intelligent response from the Gemini model based on user inquiries.
  * Uses gemini-3-flash-preview for efficient and accurate text-based Q&A.
  */
 export const generateAIResponse = async (userPrompt: string): Promise<string> => {
+  if (!ai) {
+    return "The AI Consultant is currently offline (Missing API Key). Please use our contact form or check your environment variables.";
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -20,7 +31,6 @@ export const generateAIResponse = async (userPrompt: string): Promise<string> =>
       },
     });
 
-    // Directly access the .text property from the GenerateContentResponse object.
     return response.text || "I'm sorry, I'm having trouble processing that right now.";
   } catch (error) {
     console.error("AI Generation Error:", error);

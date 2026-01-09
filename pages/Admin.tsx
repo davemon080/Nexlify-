@@ -16,15 +16,20 @@ import {
   ShieldCheckIcon,
   EyeIcon,
   EyeSlashIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  DocumentTextIcon,
+  ServerIcon,
+  ArrowPathIcon,
+  CloudArrowUpIcon
 } from '@heroicons/react/24/outline';
 
 const Admin: React.FC = () => {
-  const { data, addProject, deleteProject, updateLogo, updateHeroImage, deleteEnquiry, updatePasscode } = useData();
+  const { data, addProject, deleteProject, updateLogo, updateHeroImage, deleteEnquiry, updatePasscode, updateAboutContent, setupDatabase } = useData();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginInput, setLoginInput] = useState('');
   const [loginError, setLoginError] = useState(false);
   const [showPasscode, setShowPasscode] = useState(false);
+  const [isSettingUpDb, setIsSettingUpDb] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'portfolio' | 'enquiries' | 'settings'>('portfolio');
   const [isAdding, setIsAdding] = useState(false);
@@ -34,8 +39,11 @@ const Admin: React.FC = () => {
   const [newPasscodeInput, setNewPasscodeInput] = useState('');
   const [passcodeError, setPasscodeError] = useState('');
 
+  const [aboutForm, setAboutForm] = useState(data.aboutContent);
+
   const logoInputRef = useRef<HTMLInputElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
+  const projectImageInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +55,26 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProj.title || !newProj.category) return;
-    addProject(newProj);
+    if (!newProj.title || !newProj.category || !newProj.image) {
+      alert("Please fill all fields and upload an image.");
+      return;
+    }
+    await addProject(newProj);
     setNewProj({ title: '', category: '', image: '' });
     setIsAdding(false);
+  };
+
+  const handleProjectImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewProj(prev => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +99,7 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handlePasscodeChange = (e: React.FormEvent) => {
+  const handlePasscodeChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasscodeError('');
 
@@ -90,10 +112,29 @@ const Admin: React.FC = () => {
       return;
     }
 
-    updatePasscode(newPasscodeInput);
+    await updatePasscode(newPasscodeInput);
     setOldPasscodeConfirm('');
     setNewPasscodeInput('');
     alert('Passcode updated successfully!');
+  };
+
+  const handleAboutUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateAboutContent(aboutForm);
+    alert('About page updated!');
+  };
+
+  const handleDbSetup = async () => {
+    if (!confirm("This will initialize the database tables if they don't exist. Continue?")) return;
+    setIsSettingUpDb(true);
+    try {
+      await setupDatabase();
+      alert("Database tables initialized successfully!");
+    } catch (err) {
+      alert("Database setup failed. Check console for details.");
+    } finally {
+      setIsSettingUpDb(false);
+    }
   };
 
   if (!isAuthenticated) {
@@ -170,7 +211,36 @@ const Admin: React.FC = () => {
       </div>
 
       {activeTab === 'settings' && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 pb-20">
+          
+          {/* Database Setup Section */}
+          <div className="glass p-8 rounded-[2rem] border border-primary/20 bg-primary/5">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <ServerIcon className="w-6 h-6 mr-3 text-primary-light" />
+              Database Management
+            </h2>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="max-w-md">
+                <p className="text-slate-400 text-sm">
+                  If you see "relation does not exist" errors, your database tables might not be created yet. 
+                  Click the button to initialize the schema.
+                </p>
+              </div>
+              <button 
+                onClick={handleDbSetup}
+                disabled={isSettingUpDb}
+                className="px-8 py-4 bg-primary hover:bg-primary-light text-white rounded-2xl font-bold transition-all flex items-center shadow-xl shadow-primary/20 disabled:opacity-50"
+              >
+                {isSettingUpDb ? (
+                  <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <ServerIcon className="w-5 h-5 mr-2" />
+                )}
+                {isSettingUpDb ? 'Initializing...' : 'Initialize Database Schema'}
+              </button>
+            </div>
+          </div>
+
           {/* Logo Upload */}
           <div className="glass p-8 rounded-[2rem] border border-white/10">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
@@ -186,7 +256,7 @@ const Admin: React.FC = () => {
                 )}
               </div>
               <div className="space-y-4">
-                <p className="text-slate-400 text-sm max-w-sm">Upload a PNG or SVG version of your logo. This will appear in the navigation bar and footer.</p>
+                <p className="text-slate-400 text-sm max-w-sm">Upload a PNG or SVG version of your logo.</p>
                 <input type="file" ref={logoInputRef} onChange={handleLogoUpload} accept="image/*" className="hidden" />
                 <div className="flex gap-4">
                   <button onClick={() => logoInputRef.current?.click()} className="px-6 py-2 bg-primary hover:bg-primary-light text-white rounded-xl font-bold transition-all">Upload Logo</button>
@@ -194,6 +264,46 @@ const Admin: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* About Page Content Editor */}
+          <div className="glass p-8 rounded-[2rem] border border-white/10">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+              <DocumentTextIcon className="w-6 h-6 mr-3 text-primary-light" />
+              About Page Content
+            </h2>
+            <form onSubmit={handleAboutUpdate} className="space-y-6 max-w-3xl">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hero Title</label>
+                <input 
+                  type="text" 
+                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  value={aboutForm.heroTitle}
+                  onChange={e => setAboutForm({...aboutForm, heroTitle: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Main Introduction</label>
+                <textarea 
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
+                  value={aboutForm.mainText}
+                  onChange={e => setAboutForm({...aboutForm, mainText: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quote/Secondary Text</label>
+                <textarea 
+                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none italic"
+                  value={aboutForm.secondaryText}
+                  onChange={e => setAboutForm({...aboutForm, secondaryText: e.target.value})}
+                />
+              </div>
+              <button type="submit" className="px-8 py-3 bg-primary hover:bg-primary-light text-white rounded-xl font-bold transition-all shadow-xl shadow-primary/20">
+                Save About Content
+              </button>
+            </form>
           </div>
 
           {/* Hero Image Upload */}
@@ -211,7 +321,7 @@ const Admin: React.FC = () => {
                 )}
               </div>
               <div className="space-y-4">
-                <p className="text-slate-400 text-sm max-w-sm">Update the main picture displayed on your landing page. Recommended: Square aspect ratio.</p>
+                <p className="text-slate-400 text-sm max-w-sm">Update the main picture displayed on your landing page.</p>
                 <input type="file" ref={heroInputRef} onChange={handleHeroUpload} accept="image/*" className="hidden" />
                 <div className="flex gap-4">
                   <button onClick={() => heroInputRef.current?.click()} className="px-6 py-2 bg-primary hover:bg-primary-light text-white rounded-xl font-bold transition-all">Update Picture</button>
@@ -228,7 +338,7 @@ const Admin: React.FC = () => {
               Security Settings
             </h2>
             <div className="max-w-md">
-              <p className="text-slate-400 text-sm mb-6">Update your admin access passcode. You must confirm your current passcode to make changes.</p>
+              <p className="text-slate-400 text-sm mb-6">Update your admin access passcode. Confirm your current passcode to make changes.</p>
               <form onSubmit={handlePasscodeChange} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Current Passcode</label>
@@ -341,7 +451,7 @@ const Admin: React.FC = () => {
           {isAdding && (
             <div className="glass p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border border-primary/30">
               <h2 className="text-xl font-bold mb-6 text-slate-900 dark:text-white">Project Details</h2>
-              <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Title</label>
                   <input required type="text" placeholder="e.g. Nebula App" className="w-full bg-slate-100 dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-3 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50" value={newProj.title} onChange={e => setNewProj({...newProj, title: e.target.value})} />
@@ -351,10 +461,29 @@ const Admin: React.FC = () => {
                   <input required type="text" placeholder="e.g. Web Design" className="w-full bg-slate-100 dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-3 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50" value={newProj.category} onChange={e => setNewProj({...newProj, category: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Image URL</label>
-                  <input required type="text" placeholder="Link to image" className="w-full bg-slate-100 dark:bg-surface-dark border border-slate-200 dark:border-white/10 p-3 rounded-xl text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary/50" value={newProj.image} onChange={e => setNewProj({...newProj, image: e.target.value})} />
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Project Image</label>
+                  <div 
+                    onClick={() => projectImageInputRef.current?.click()}
+                    className="w-full bg-slate-100 dark:bg-surface-dark border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-all group overflow-hidden relative min-h-[120px]"
+                  >
+                    {newProj.image ? (
+                      <img src={newProj.image} className="absolute inset-0 w-full h-full object-cover" alt="Preview" />
+                    ) : (
+                      <>
+                        <CloudArrowUpIcon className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
+                        <span className="text-xs text-slate-500 mt-2">Click to upload local file</span>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      ref={projectImageInputRef} 
+                      onChange={handleProjectImageUpload} 
+                      accept="image/*" 
+                      className="hidden" 
+                    />
+                  </div>
                 </div>
-                <button type="submit" className="md:col-span-3 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-light transition-all shadow-xl shadow-primary/20">Publish Project</button>
+                <button type="submit" className="md:col-span-2 lg:col-span-3 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-light transition-all shadow-xl shadow-primary/20">Publish Project</button>
               </form>
             </div>
           )}

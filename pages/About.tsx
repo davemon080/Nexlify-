@@ -8,8 +8,12 @@ import {
   SparklesIcon,
   RocketLaunchIcon
 } from '@heroicons/react/24/outline';
+import { useData } from '../context/DataContext';
 
 const About: React.FC = () => {
+  const { data } = useData();
+  const { aboutContent } = data;
+
   const values = [
     {
       title: 'Human-First Design',
@@ -43,40 +47,31 @@ const About: React.FC = () => {
             <span>The Founder's Journey</span>
           </div>
           <h1 className="text-4xl md:text-7xl font-display font-bold text-slate-900 dark:text-white mb-8 leading-tight">
-            The Story Behind <span className="text-gradient">Nexlify.</span>
+            {aboutContent.heroTitle}
           </h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-start">
           <div className="space-y-8 text-lg md:text-xl text-slate-600 dark:text-slate-400 leading-relaxed reveal">
             <p className="font-medium text-slate-900 dark:text-white">
-              I didn’t start my digital company because it was trendy. I started it because I was curious, restless, and obsessed with building things that actually work.
-            </p>
-            <p>
-              My name is <span className="text-primary-light font-bold">Simon David Ojochenemi</span>, and I founded my digital company at 19 with nothing but a laptop, an internet connection, and a strong belief that ideas deserve to be seen, heard, and experienced properly.
-            </p>
-            <p>
-              What began as late nights learning, experimenting, and failing quietly has grown into a purpose-driven digital brand focused on helping businesses communicate clearly and show up professionally online.
+              {aboutContent.mainText}
             </p>
             <div className="p-8 glass rounded-[2rem] border-l-4 border-l-primary border-white/10 italic">
-              "From day one, my mindset has been simple: create value first. Whether it’s content writing that sounds human or websites that are functional and scalable — every service we offer is built around impact, not noise."
+              "{aboutContent.secondaryText}"
             </div>
           </div>
           <div className="space-y-8 text-lg md:text-xl text-slate-600 dark:text-slate-400 leading-relaxed reveal" style={{ transitionDelay: '0.2s' }}>
-            <p>
-              I’ve always believed that digital work should feel intentional. Anyone can publish content or launch a website, but not everyone can create something that connects, builds trust, and moves people to action. That gap is where my company operates.
+             <p>
+              I founded my digital company with nothing but a laptop, an internet connection, and a strong belief that ideas deserve to be seen, heard, and experienced properly.
             </p>
             <p>
-              Starting young taught me adaptability. I learned how to listen before building, how to think long-term, and how to balance creativity with strategy. Today, I bring that same energy into every project — blending technical skill with storytelling, and innovation with clarity.
-            </p>
-            <p>
-              This isn’t just about design or development. It’s about helping brands find their voice, refine their presence, and grow with confidence in a digital-first world.
+              What began as late nights learning and experimenting has grown into a purpose-driven digital brand focused on helping businesses communicate clearly.
             </p>
             <div className="flex items-center space-x-4 pt-4">
               <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white">
                 <RocketLaunchIcon className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Still building. Still learning. Still curious.</p>
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Still building. Still curious.</p>
             </div>
           </div>
         </div>
@@ -86,7 +81,7 @@ const About: React.FC = () => {
       <section className="px-4 sm:px-6 lg:px-8 mt-32 max-w-7xl mx-auto reveal">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 dark:text-white mb-4">Core Philosophy</h2>
-          <p className="text-slate-500 dark:text-slate-400">The pillars that define how Simon and the Nexlify team work.</p>
+          <p className="text-slate-500 dark:text-slate-400">The pillars that define how we work at Nexlify.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {values.map((v, i) => (

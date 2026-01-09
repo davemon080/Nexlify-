@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Inquiry from './pages/Consult';
 import Admin from './pages/Admin';
+import AIConsultant from './components/AIConsultant';
 import { DataProvider } from './context/DataContext';
 
 const ScrollToTop = () => {
@@ -31,20 +32,27 @@ const ScrollToTop = () => {
   return null;
 };
 
+const AppContent = () => {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/inquiry" element={<Inquiry />} />
+        <Route path="/consult" element={<Inquiry />} />
+        <Route path="/admin" element={<Admin />} />
+      </Routes>
+      <AIConsultant />
+    </Layout>
+  );
+};
+
 const App: React.FC = () => {
   return (
     <DataProvider>
       <Router>
         <ScrollToTop />
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/inquiry" element={<Inquiry />} />
-            <Route path="/consult" element={<Inquiry />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </Layout>
+        <AppContent />
       </Router>
     </DataProvider>
   );
